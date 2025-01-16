@@ -13,16 +13,12 @@ class ChatController extends Controller
 
     public function chat(Request $request)
     {
-        $aux = DB::select('select * from leads where reason_id = 1');
-        dd($aux);
-
         $sessionId = $request->session()->getId();
         $question = $request->input('message');
 
         $this->context = $this->loadContext($sessionId);
 
         $queryMessages = $this->buildQueryMessages($question);
-        dump($queryMessages);
 
         $queryResponse = OpenAI::chat()->create([
             'model' => 'gpt-3.5-turbo',
@@ -36,12 +32,10 @@ class ChatController extends Controller
         try {
             $query = $this->extractQuery($aiQueryResponse);
             $results = $this->executeQuery($query);
-            dump($query);
 
             $this->updateContext($question, json_encode($results));
             $this->saveContext($sessionId, $this->context);
 
-            // Build a human-friendly response using GPT-3.5 for cost optimization
             $responseMessages = $this->buildResponseMessages($question, $results);
             $friendlyResponse = OpenAI::chat()->create([
                 'model' => 'gpt-3.5-turbo',

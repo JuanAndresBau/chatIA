@@ -21,7 +21,7 @@ class ChatController extends Controller
         $queryMessages = $this->buildQueryMessages($question);
 
         $queryResponse = OpenAI::chat()->create([
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4',
             'messages' => $queryMessages,
             'max_tokens' => 150,
             'temperature' => 0.1,
@@ -67,8 +67,8 @@ class ChatController extends Controller
         $compactContext = $this->compactContext($this->context);
 
         return [
-            ['role' => 'system', 'content' => 'Eres un asistente experto en construir consultas SQL para una base de datos relacional.usa LIKE para coincidencias aproximadas en nombres de todas las tablas excepto leads. Traduce términos como "sin gestionar, venta..." a "reasons.name LIKE \"%...%\", hay varios reasons en reasons.name similares, para esto tener en cuenta el funnel_id", siempre busca informacion del año actual a menos que especifiquen otro y asegúrate de devolver consultas solo de lectura.'],
-            ['role' => 'user', 'content' => "Esquema de la base de datos:\n- leads(id,name,brand_id,distributor_id,model_id,reason_id,created_at)\n- distributors(id,name)\n- brands(id,name)\n- models(id,name)\n- reasons(id,name,funnel_id), estados de funnel_id(1 primera etapa del lead, 2 estados de contactado,3 estados de agendamiento, 4 estados de inicio de proceso de venta, 5 ventas)\nLa conversación anterior:\n$compactContext\nNueva pregunta: $question\nDevuelve únicamente el query SQL de lectura."],
+            ['role' => 'system', 'content' => 'Eres un asistente experto en construir consultas SQL para una base de datos relacional. prohibido escribir(reason_id IN).usa LIKE... limit 1 para coincidencias aproximadas en nombres para brands,distributors,models.No uses join o similares y SIEMPRE PONER LIMIT 1 A LOS LIKE Y NO USAR IN.Traduce términos como "sin gestionar, venta..." ejemplo "reasons.name LIKE \"%venta%\", hay varios reasons en reasons.name similares, para esto tener en cuenta el funnel_id", siempre busca informacion del año actual a menos que especifiquen otro y asegúrate de devolver consultas solo de lectura.'],
+            ['role' => 'user', 'content' => "Esquema de la base de datos:\n- leads(id,brand_id,distributor_id,model_id,reason_id,managed(datetime fecha de gestion),created_at)\n- distributors(id,public_name)\n- brands(id,public_name)\n- models(id,name)\n- reasons(id,name,funnel_id), estados de funnel_id(1 primera etapa del lead, 2 estados de contactado,3 estados de agendamiento, 4 estados de inicio de proceso de venta, 5 ventas)\nLa conversación anterior:\n$compactContext\nNueva pregunta: $question\nDevuelve únicamente el query SQL de lectura."],
         ];
     }
 
